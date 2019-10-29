@@ -1,0 +1,640 @@
+
+import pandas as pd
+import numpy as np
+​
+pd.options.display.max_columns = 99
+In [2]:
+
+cols = ['symboling', 'normalized-losses', 'make', 'fuel-type', 'aspiration', 'num-of-doors', 'body-style', 
+        'drive-wheels', 'engine-location', 'wheel-base', 'length', 'width', 'height', 'curb-weight', 'engine-type', 
+        'num-of-cylinders', 'engine-size', 'fuel-system', 'bore', 'stroke', 'compression-rate', 'horsepower', 'peak-rpm', 'city-mpg', 'highway-mpg', 'price']
+cars = pd.read_csv('imports-85.data', names=cols)
+In [3]:
+
+cars
+Out[3]:
+symboling	normalized-losses	make	fuel-type	aspiration	num-of-doors	body-style	drive-wheels	engine-location	wheel-base	length	width	height	curb-weight	engine-type	num-of-cylinders	engine-size	fuel-system	bore	stroke	compression-rate	horsepower	peak-rpm	city-mpg	highway-mpg	price
+0	3	?	alfa-romero	gas	std	two	convertible	rwd	front	88.6	168.8	64.1	48.8	2548	dohc	four	130	mpfi	3.47	2.68	9.00	111	5000	21	27	13495
+1	3	?	alfa-romero	gas	std	two	convertible	rwd	front	88.6	168.8	64.1	48.8	2548	dohc	four	130	mpfi	3.47	2.68	9.00	111	5000	21	27	16500
+2	1	?	alfa-romero	gas	std	two	hatchback	rwd	front	94.5	171.2	65.5	52.4	2823	ohcv	six	152	mpfi	2.68	3.47	9.00	154	5000	19	26	16500
+3	2	164	audi	gas	std	four	sedan	fwd	front	99.8	176.6	66.2	54.3	2337	ohc	four	109	mpfi	3.19	3.40	10.00	102	5500	24	30	13950
+4	2	164	audi	gas	std	four	sedan	4wd	front	99.4	176.6	66.4	54.3	2824	ohc	five	136	mpfi	3.19	3.40	8.00	115	5500	18	22	17450
+5	2	?	audi	gas	std	two	sedan	fwd	front	99.8	177.3	66.3	53.1	2507	ohc	five	136	mpfi	3.19	3.40	8.50	110	5500	19	25	15250
+6	1	158	audi	gas	std	four	sedan	fwd	front	105.8	192.7	71.4	55.7	2844	ohc	five	136	mpfi	3.19	3.40	8.50	110	5500	19	25	17710
+7	1	?	audi	gas	std	four	wagon	fwd	front	105.8	192.7	71.4	55.7	2954	ohc	five	136	mpfi	3.19	3.40	8.50	110	5500	19	25	18920
+8	1	158	audi	gas	turbo	four	sedan	fwd	front	105.8	192.7	71.4	55.9	3086	ohc	five	131	mpfi	3.13	3.40	8.30	140	5500	17	20	23875
+9	0	?	audi	gas	turbo	two	hatchback	4wd	front	99.5	178.2	67.9	52.0	3053	ohc	five	131	mpfi	3.13	3.40	7.00	160	5500	16	22	?
+10	2	192	bmw	gas	std	two	sedan	rwd	front	101.2	176.8	64.8	54.3	2395	ohc	four	108	mpfi	3.50	2.80	8.80	101	5800	23	29	16430
+11	0	192	bmw	gas	std	four	sedan	rwd	front	101.2	176.8	64.8	54.3	2395	ohc	four	108	mpfi	3.50	2.80	8.80	101	5800	23	29	16925
+12	0	188	bmw	gas	std	two	sedan	rwd	front	101.2	176.8	64.8	54.3	2710	ohc	six	164	mpfi	3.31	3.19	9.00	121	4250	21	28	20970
+13	0	188	bmw	gas	std	four	sedan	rwd	front	101.2	176.8	64.8	54.3	2765	ohc	six	164	mpfi	3.31	3.19	9.00	121	4250	21	28	21105
+14	1	?	bmw	gas	std	four	sedan	rwd	front	103.5	189.0	66.9	55.7	3055	ohc	six	164	mpfi	3.31	3.19	9.00	121	4250	20	25	24565
+15	0	?	bmw	gas	std	four	sedan	rwd	front	103.5	189.0	66.9	55.7	3230	ohc	six	209	mpfi	3.62	3.39	8.00	182	5400	16	22	30760
+16	0	?	bmw	gas	std	two	sedan	rwd	front	103.5	193.8	67.9	53.7	3380	ohc	six	209	mpfi	3.62	3.39	8.00	182	5400	16	22	41315
+17	0	?	bmw	gas	std	four	sedan	rwd	front	110.0	197.0	70.9	56.3	3505	ohc	six	209	mpfi	3.62	3.39	8.00	182	5400	15	20	36880
+18	2	121	chevrolet	gas	std	two	hatchback	fwd	front	88.4	141.1	60.3	53.2	1488	l	three	61	2bbl	2.91	3.03	9.50	48	5100	47	53	5151
+19	1	98	chevrolet	gas	std	two	hatchback	fwd	front	94.5	155.9	63.6	52.0	1874	ohc	four	90	2bbl	3.03	3.11	9.60	70	5400	38	43	6295
+20	0	81	chevrolet	gas	std	four	sedan	fwd	front	94.5	158.8	63.6	52.0	1909	ohc	four	90	2bbl	3.03	3.11	9.60	70	5400	38	43	6575
+21	1	118	dodge	gas	std	two	hatchback	fwd	front	93.7	157.3	63.8	50.8	1876	ohc	four	90	2bbl	2.97	3.23	9.41	68	5500	37	41	5572
+22	1	118	dodge	gas	std	two	hatchback	fwd	front	93.7	157.3	63.8	50.8	1876	ohc	four	90	2bbl	2.97	3.23	9.40	68	5500	31	38	6377
+23	1	118	dodge	gas	turbo	two	hatchback	fwd	front	93.7	157.3	63.8	50.8	2128	ohc	four	98	mpfi	3.03	3.39	7.60	102	5500	24	30	7957
+24	1	148	dodge	gas	std	four	hatchback	fwd	front	93.7	157.3	63.8	50.6	1967	ohc	four	90	2bbl	2.97	3.23	9.40	68	5500	31	38	6229
+25	1	148	dodge	gas	std	four	sedan	fwd	front	93.7	157.3	63.8	50.6	1989	ohc	four	90	2bbl	2.97	3.23	9.40	68	5500	31	38	6692
+26	1	148	dodge	gas	std	four	sedan	fwd	front	93.7	157.3	63.8	50.6	1989	ohc	four	90	2bbl	2.97	3.23	9.40	68	5500	31	38	7609
+27	1	148	dodge	gas	turbo	?	sedan	fwd	front	93.7	157.3	63.8	50.6	2191	ohc	four	98	mpfi	3.03	3.39	7.60	102	5500	24	30	8558
+28	-1	110	dodge	gas	std	four	wagon	fwd	front	103.3	174.6	64.6	59.8	2535	ohc	four	122	2bbl	3.34	3.46	8.50	88	5000	24	30	8921
+29	3	145	dodge	gas	turbo	two	hatchback	fwd	front	95.9	173.2	66.3	50.2	2811	ohc	four	156	mfi	3.60	3.90	7.00	145	5000	19	24	12964
+...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...	...
+175	-1	65	toyota	gas	std	four	hatchback	fwd	front	102.4	175.6	66.5	53.9	2414	ohc	four	122	mpfi	3.31	3.54	8.70	92	4200	27	32	9988
+176	-1	65	toyota	gas	std	four	sedan	fwd	front	102.4	175.6	66.5	54.9	2414	ohc	four	122	mpfi	3.31	3.54	8.70	92	4200	27	32	10898
+177	-1	65	toyota	gas	std	four	hatchback	fwd	front	102.4	175.6	66.5	53.9	2458	ohc	four	122	mpfi	3.31	3.54	8.70	92	4200	27	32	11248
+178	3	197	toyota	gas	std	two	hatchback	rwd	front	102.9	183.5	67.7	52.0	2976	dohc	six	171	mpfi	3.27	3.35	9.30	161	5200	20	24	16558
+179	3	197	toyota	gas	std	two	hatchback	rwd	front	102.9	183.5	67.7	52.0	3016	dohc	six	171	mpfi	3.27	3.35	9.30	161	5200	19	24	15998
+180	-1	90	toyota	gas	std	four	sedan	rwd	front	104.5	187.8	66.5	54.1	3131	dohc	six	171	mpfi	3.27	3.35	9.20	156	5200	20	24	15690
+181	-1	?	toyota	gas	std	four	wagon	rwd	front	104.5	187.8	66.5	54.1	3151	dohc	six	161	mpfi	3.27	3.35	9.20	156	5200	19	24	15750
+182	2	122	volkswagen	diesel	std	two	sedan	fwd	front	97.3	171.7	65.5	55.7	2261	ohc	four	97	idi	3.01	3.40	23.00	52	4800	37	46	7775
+183	2	122	volkswagen	gas	std	two	sedan	fwd	front	97.3	171.7	65.5	55.7	2209	ohc	four	109	mpfi	3.19	3.40	9.00	85	5250	27	34	7975
+184	2	94	volkswagen	diesel	std	four	sedan	fwd	front	97.3	171.7	65.5	55.7	2264	ohc	four	97	idi	3.01	3.40	23.00	52	4800	37	46	7995
+185	2	94	volkswagen	gas	std	four	sedan	fwd	front	97.3	171.7	65.5	55.7	2212	ohc	four	109	mpfi	3.19	3.40	9.00	85	5250	27	34	8195
+186	2	94	volkswagen	gas	std	four	sedan	fwd	front	97.3	171.7	65.5	55.7	2275	ohc	four	109	mpfi	3.19	3.40	9.00	85	5250	27	34	8495
+187	2	94	volkswagen	diesel	turbo	four	sedan	fwd	front	97.3	171.7	65.5	55.7	2319	ohc	four	97	idi	3.01	3.40	23.00	68	4500	37	42	9495
+188	2	94	volkswagen	gas	std	four	sedan	fwd	front	97.3	171.7	65.5	55.7	2300	ohc	four	109	mpfi	3.19	3.40	10.00	100	5500	26	32	9995
+189	3	?	volkswagen	gas	std	two	convertible	fwd	front	94.5	159.3	64.2	55.6	2254	ohc	four	109	mpfi	3.19	3.40	8.50	90	5500	24	29	11595
+190	3	256	volkswagen	gas	std	two	hatchback	fwd	front	94.5	165.7	64.0	51.4	2221	ohc	four	109	mpfi	3.19	3.40	8.50	90	5500	24	29	9980
+191	0	?	volkswagen	gas	std	four	sedan	fwd	front	100.4	180.2	66.9	55.1	2661	ohc	five	136	mpfi	3.19	3.40	8.50	110	5500	19	24	13295
+192	0	?	volkswagen	diesel	turbo	four	sedan	fwd	front	100.4	180.2	66.9	55.1	2579	ohc	four	97	idi	3.01	3.40	23.00	68	4500	33	38	13845
+193	0	?	volkswagen	gas	std	four	wagon	fwd	front	100.4	183.1	66.9	55.1	2563	ohc	four	109	mpfi	3.19	3.40	9.00	88	5500	25	31	12290
+194	-2	103	volvo	gas	std	four	sedan	rwd	front	104.3	188.8	67.2	56.2	2912	ohc	four	141	mpfi	3.78	3.15	9.50	114	5400	23	28	12940
+195	-1	74	volvo	gas	std	four	wagon	rwd	front	104.3	188.8	67.2	57.5	3034	ohc	four	141	mpfi	3.78	3.15	9.50	114	5400	23	28	13415
+196	-2	103	volvo	gas	std	four	sedan	rwd	front	104.3	188.8	67.2	56.2	2935	ohc	four	141	mpfi	3.78	3.15	9.50	114	5400	24	28	15985
+197	-1	74	volvo	gas	std	four	wagon	rwd	front	104.3	188.8	67.2	57.5	3042	ohc	four	141	mpfi	3.78	3.15	9.50	114	5400	24	28	16515
+198	-2	103	volvo	gas	turbo	four	sedan	rwd	front	104.3	188.8	67.2	56.2	3045	ohc	four	130	mpfi	3.62	3.15	7.50	162	5100	17	22	18420
+199	-1	74	volvo	gas	turbo	four	wagon	rwd	front	104.3	188.8	67.2	57.5	3157	ohc	four	130	mpfi	3.62	3.15	7.50	162	5100	17	22	18950
+200	-1	95	volvo	gas	std	four	sedan	rwd	front	109.1	188.8	68.9	55.5	2952	ohc	four	141	mpfi	3.78	3.15	9.50	114	5400	23	28	16845
+201	-1	95	volvo	gas	turbo	four	sedan	rwd	front	109.1	188.8	68.8	55.5	3049	ohc	four	141	mpfi	3.78	3.15	8.70	160	5300	19	25	19045
+202	-1	95	volvo	gas	std	four	sedan	rwd	front	109.1	188.8	68.9	55.5	3012	ohcv	six	173	mpfi	3.58	2.87	8.80	134	5500	18	23	21485
+203	-1	95	volvo	diesel	turbo	four	sedan	rwd	front	109.1	188.8	68.9	55.5	3217	ohc	six	145	idi	3.01	3.40	23.00	106	4800	26	27	22470
+204	-1	95	volvo	gas	turbo	four	sedan	rwd	front	109.1	188.8	68.9	55.5	3062	ohc	four	141	mpfi	3.78	3.15	9.50	114	5400	19	25	22625
+205 rows × 26 columns
+In [5]:
+
+# Select only the columns with continuous values from - https://archive.ics.uci.edu/ml/machine-learning-databases/autos/imports-85.names
+continuous_values_cols = ['normalized-losses', 'wheel-base', 'length', 'width', 'height', 'curb-weight', 'bore', 'stroke', 'compression-rate', 'horsepower', 'peak-rpm', 'city-mpg', 'highway-mpg', 'price']
+numeric_cars = cars[continuous_values_cols]
+In [6]:
+
+numeric_cars.head(5)
+Out[6]:
+normalized-losses	wheel-base	length	width	height	curb-weight	bore	stroke	compression-rate	horsepower	peak-rpm	city-mpg	highway-mpg	price
+0	?	88.6	168.8	64.1	48.8	2548	3.47	2.68	9.0	111	5000	21	27	13495
+1	?	88.6	168.8	64.1	48.8	2548	3.47	2.68	9.0	111	5000	21	27	16500
+2	?	94.5	171.2	65.5	52.4	2823	2.68	3.47	9.0	154	5000	19	26	16500
+3	164	99.8	176.6	66.2	54.3	2337	3.19	3.40	10.0	102	5500	24	30	13950
+4	164	99.4	176.6	66.4	54.3	2824	3.19	3.40	8.0	115	5500	18	22	17450
+In [7]:
+
+numeric_cars = numeric_cars.replace('?', np.nan)
+numeric_cars
+Out[7]:
+normalized-losses	wheel-base	length	width	height	curb-weight	bore	stroke	compression-rate	horsepower	peak-rpm	city-mpg	highway-mpg	price
+0	NaN	88.6	168.8	64.1	48.8	2548	3.47	2.68	9.00	111	5000	21	27	13495
+1	NaN	88.6	168.8	64.1	48.8	2548	3.47	2.68	9.00	111	5000	21	27	16500
+2	NaN	94.5	171.2	65.5	52.4	2823	2.68	3.47	9.00	154	5000	19	26	16500
+3	164	99.8	176.6	66.2	54.3	2337	3.19	3.40	10.00	102	5500	24	30	13950
+4	164	99.4	176.6	66.4	54.3	2824	3.19	3.40	8.00	115	5500	18	22	17450
+5	NaN	99.8	177.3	66.3	53.1	2507	3.19	3.40	8.50	110	5500	19	25	15250
+6	158	105.8	192.7	71.4	55.7	2844	3.19	3.40	8.50	110	5500	19	25	17710
+7	NaN	105.8	192.7	71.4	55.7	2954	3.19	3.40	8.50	110	5500	19	25	18920
+8	158	105.8	192.7	71.4	55.9	3086	3.13	3.40	8.30	140	5500	17	20	23875
+9	NaN	99.5	178.2	67.9	52.0	3053	3.13	3.40	7.00	160	5500	16	22	NaN
+10	192	101.2	176.8	64.8	54.3	2395	3.50	2.80	8.80	101	5800	23	29	16430
+11	192	101.2	176.8	64.8	54.3	2395	3.50	2.80	8.80	101	5800	23	29	16925
+12	188	101.2	176.8	64.8	54.3	2710	3.31	3.19	9.00	121	4250	21	28	20970
+13	188	101.2	176.8	64.8	54.3	2765	3.31	3.19	9.00	121	4250	21	28	21105
+14	NaN	103.5	189.0	66.9	55.7	3055	3.31	3.19	9.00	121	4250	20	25	24565
+15	NaN	103.5	189.0	66.9	55.7	3230	3.62	3.39	8.00	182	5400	16	22	30760
+16	NaN	103.5	193.8	67.9	53.7	3380	3.62	3.39	8.00	182	5400	16	22	41315
+17	NaN	110.0	197.0	70.9	56.3	3505	3.62	3.39	8.00	182	5400	15	20	36880
+18	121	88.4	141.1	60.3	53.2	1488	2.91	3.03	9.50	48	5100	47	53	5151
+19	98	94.5	155.9	63.6	52.0	1874	3.03	3.11	9.60	70	5400	38	43	6295
+20	81	94.5	158.8	63.6	52.0	1909	3.03	3.11	9.60	70	5400	38	43	6575
+21	118	93.7	157.3	63.8	50.8	1876	2.97	3.23	9.41	68	5500	37	41	5572
+22	118	93.7	157.3	63.8	50.8	1876	2.97	3.23	9.40	68	5500	31	38	6377
+23	118	93.7	157.3	63.8	50.8	2128	3.03	3.39	7.60	102	5500	24	30	7957
+24	148	93.7	157.3	63.8	50.6	1967	2.97	3.23	9.40	68	5500	31	38	6229
+25	148	93.7	157.3	63.8	50.6	1989	2.97	3.23	9.40	68	5500	31	38	6692
+26	148	93.7	157.3	63.8	50.6	1989	2.97	3.23	9.40	68	5500	31	38	7609
+27	148	93.7	157.3	63.8	50.6	2191	3.03	3.39	7.60	102	5500	24	30	8558
+28	110	103.3	174.6	64.6	59.8	2535	3.34	3.46	8.50	88	5000	24	30	8921
+29	145	95.9	173.2	66.3	50.2	2811	3.60	3.90	7.00	145	5000	19	24	12964
+...	...	...	...	...	...	...	...	...	...	...	...	...	...	...
+175	65	102.4	175.6	66.5	53.9	2414	3.31	3.54	8.70	92	4200	27	32	9988
+176	65	102.4	175.6	66.5	54.9	2414	3.31	3.54	8.70	92	4200	27	32	10898
+177	65	102.4	175.6	66.5	53.9	2458	3.31	3.54	8.70	92	4200	27	32	11248
+178	197	102.9	183.5	67.7	52.0	2976	3.27	3.35	9.30	161	5200	20	24	16558
+179	197	102.9	183.5	67.7	52.0	3016	3.27	3.35	9.30	161	5200	19	24	15998
+180	90	104.5	187.8	66.5	54.1	3131	3.27	3.35	9.20	156	5200	20	24	15690
+181	NaN	104.5	187.8	66.5	54.1	3151	3.27	3.35	9.20	156	5200	19	24	15750
+182	122	97.3	171.7	65.5	55.7	2261	3.01	3.40	23.00	52	4800	37	46	7775
+183	122	97.3	171.7	65.5	55.7	2209	3.19	3.40	9.00	85	5250	27	34	7975
+184	94	97.3	171.7	65.5	55.7	2264	3.01	3.40	23.00	52	4800	37	46	7995
+185	94	97.3	171.7	65.5	55.7	2212	3.19	3.40	9.00	85	5250	27	34	8195
+186	94	97.3	171.7	65.5	55.7	2275	3.19	3.40	9.00	85	5250	27	34	8495
+187	94	97.3	171.7	65.5	55.7	2319	3.01	3.40	23.00	68	4500	37	42	9495
+188	94	97.3	171.7	65.5	55.7	2300	3.19	3.40	10.00	100	5500	26	32	9995
+189	NaN	94.5	159.3	64.2	55.6	2254	3.19	3.40	8.50	90	5500	24	29	11595
+190	256	94.5	165.7	64.0	51.4	2221	3.19	3.40	8.50	90	5500	24	29	9980
+191	NaN	100.4	180.2	66.9	55.1	2661	3.19	3.40	8.50	110	5500	19	24	13295
+192	NaN	100.4	180.2	66.9	55.1	2579	3.01	3.40	23.00	68	4500	33	38	13845
+193	NaN	100.4	183.1	66.9	55.1	2563	3.19	3.40	9.00	88	5500	25	31	12290
+194	103	104.3	188.8	67.2	56.2	2912	3.78	3.15	9.50	114	5400	23	28	12940
+195	74	104.3	188.8	67.2	57.5	3034	3.78	3.15	9.50	114	5400	23	28	13415
+196	103	104.3	188.8	67.2	56.2	2935	3.78	3.15	9.50	114	5400	24	28	15985
+197	74	104.3	188.8	67.2	57.5	3042	3.78	3.15	9.50	114	5400	24	28	16515
+198	103	104.3	188.8	67.2	56.2	3045	3.62	3.15	7.50	162	5100	17	22	18420
+199	74	104.3	188.8	67.2	57.5	3157	3.62	3.15	7.50	162	5100	17	22	18950
+200	95	109.1	188.8	68.9	55.5	2952	3.78	3.15	9.50	114	5400	23	28	16845
+201	95	109.1	188.8	68.8	55.5	3049	3.78	3.15	8.70	160	5300	19	25	19045
+202	95	109.1	188.8	68.9	55.5	3012	3.58	2.87	8.80	134	5500	18	23	21485
+203	95	109.1	188.8	68.9	55.5	3217	3.01	3.40	23.00	106	4800	26	27	22470
+204	95	109.1	188.8	68.9	55.5	3062	3.78	3.15	9.50	114	5400	19	25	22625
+205 rows × 14 columns
+In [8]:
+
+numeric_cars = numeric_cars.astype('float')
+numeric_cars.isnull().sum()
+Out[8]:
+normalized-losses    41
+wheel-base            0
+length                0
+width                 0
+height                0
+curb-weight           0
+bore                  4
+stroke                4
+compression-rate      0
+horsepower            2
+peak-rpm              2
+city-mpg              0
+highway-mpg           0
+price                 4
+dtype: int64
+In [9]:
+
+# Replace missing values in other columns using column means.
+numeric_cars = numeric_cars.fillna(numeric_cars.mean())
+In [10]:
+
+# Because `price` is the column we want to predict, let's remove any rows with missing `price` values.
+numeric_cars = numeric_cars.dropna(subset=['price'])
+numeric_cars.isnull().sum()
+Out[10]:
+normalized-losses    0
+wheel-base           0
+length               0
+width                0
+height               0
+curb-weight          0
+bore                 0
+stroke               0
+compression-rate     0
+horsepower           0
+peak-rpm             0
+city-mpg             0
+highway-mpg          0
+price                0
+dtype: int64
+In [11]:
+
+# Replace missing values in other columns using column means.
+numeric_cars = numeric_cars.fillna(numeric_cars.mean())
+In [12]:
+
+# Confirm that there's no more missing values!
+numeric_cars.isnull().sum()
+Out[12]:
+normalized-losses    0
+wheel-base           0
+length               0
+width                0
+height               0
+curb-weight          0
+bore                 0
+stroke               0
+compression-rate     0
+horsepower           0
+peak-rpm             0
+city-mpg             0
+highway-mpg          0
+price                0
+dtype: int64
+In [14]:
+
+# Normalize all columnns to range from 0 to 1 except the target column.
+price_col = numeric_cars['price']
+numeric_cars = (numeric_cars - numeric_cars.min())/(numeric_cars.max() - numeric_cars.min())
+numeric_cars['price'] = price_col
+In [16]:
+
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.metrics import mean_squared_error
+​
+def knn_train_test(train_col, target_col, df):
+    knn = KNeighborsRegressor()
+    np.random.seed(1)
+        
+    # Randomize order of rows in data frame.
+    shuffled_index = np.random.permutation(df.index)
+    rand_df = df.reindex(shuffled_index)
+​
+    # Divide number of rows in half and round.
+    last_train_row = int(len(rand_df) / 2)
+    
+    # Select the first half and set as training set.
+    # Select the second half and set as test set.
+    train_df = rand_df.iloc[0:last_train_row]
+    test_df = rand_df.iloc[last_train_row:]
+    
+    # Fit a KNN model using default k value.
+    knn.fit(train_df[[train_col]], train_df[target_col])
+    
+    # Make predictions using model.
+    predicted_labels = knn.predict(test_df[[train_col]])
+​
+    # Calculate and return RMSE.
+    mse = mean_squared_error(test_df[target_col], predicted_labels)
+    rmse = np.sqrt(mse)
+    return rmse
+​
+rmse_results = {}
+train_cols = numeric_cars.columns.drop('price')
+​
+# For each column (minus `price`), train a model, return RMSE value
+# and add to the dictionary `rmse_results`.
+for col in train_cols:
+    rmse_val = knn_train_test(col, 'price', numeric_cars)
+    rmse_results[col] = rmse_val
+​
+# Create a Series object from the dictionary so 
+# we can easily view the results, sort, etc
+rmse_results_series = pd.Series(rmse_results)
+rmse_results_series.sort_values()
+Out[16]:
+highway-mpg          4245.734567
+curb-weight          4436.523561
+width                5030.139338
+city-mpg             5085.047194
+horsepower           5092.272401
+length               5418.778301
+wheel-base           5743.877086
+bore                 6746.031651
+compression-rate     7177.202061
+normalized-losses    7374.513274
+height               7832.152833
+peak-rpm             7965.541705
+stroke               8096.653898
+dtype: float64
+In [17]:
+
+def knn_train_test(train_col, target_col, df):
+    np.random.seed(1)
+        
+    # Randomize order of rows in data frame.
+    shuffled_index = np.random.permutation(df.index)
+    rand_df = df.reindex(shuffled_index)
+​
+    # Divide number of rows in half and round.
+    last_train_row = int(len(rand_df) / 2)
+    
+    # Select the first half and set as training set.
+    # Select the second half and set as test set.
+    train_df = rand_df.iloc[0:last_train_row]
+    test_df = rand_df.iloc[last_train_row:]
+    
+    k_values = [1,3,5,7,9]
+    k_rmses = {}
+    
+    for k in k_values:
+        # Fit model using k nearest neighbors.
+        knn = KNeighborsRegressor(n_neighbors=k)
+        knn.fit(train_df[[train_col]], train_df[target_col])
+​
+        # Make predictions using model.
+        predicted_labels = knn.predict(test_df[[train_col]])
+​
+        # Calculate and return RMSE.
+        mse = mean_squared_error(test_df[target_col], predicted_labels)
+        rmse = np.sqrt(mse)
+        
+        k_rmses[k] = rmse
+    return k_rmses
+​
+k_rmse_results = {}
+​
+# For each column (minus `price`), train a model, return RMSE value
+# and add to the dictionary `rmse_results`.
+train_cols = numeric_cars.columns.drop('price')
+for col in train_cols:
+    rmse_val = knn_train_test(col, 'price', numeric_cars)
+    k_rmse_results[col] = rmse_val
+​
+k_rmse_results
+Out[17]:
+{'bore': {1: 7930.548590614734,
+  3: 6353.8909942494565,
+  5: 6746.031650636273,
+  7: 7246.705124103924,
+  9: 7184.417703627346},
+ 'city-mpg': {1: 6449.848972168971,
+  3: 4808.843642391777,
+  5: 5085.0471938761675,
+  7: 4958.158653064454,
+  9: 5021.788908379828},
+ 'compression-rate': {1: 7255.772135357892,
+  3: 7485.226183865361,
+  5: 7177.202060550313,
+  7: 7333.967327565648,
+  9: 7426.77234607814},
+ 'curb-weight': {1: 5842.169653813219,
+  3: 4527.849193303364,
+  5: 4436.523561278551,
+  7: 4320.057970537657,
+  9: 4181.086220663609},
+ 'height': {1: 10653.050778292903,
+  3: 8176.934988463841,
+  5: 7832.152832500197,
+  7: 7743.870132519971,
+  9: 7632.665665042622},
+ 'highway-mpg': {1: 4445.090471315778,
+  3: 4442.016315845971,
+  5: 4245.734566600798,
+  7: 4266.445995724475,
+  9: 4522.647593669363},
+ 'horsepower': {1: 5261.091645623908,
+  3: 4995.302906280692,
+  5: 5092.272401434547,
+  7: 5025.308887429083,
+  9: 4989.9865689273765},
+ 'length': {1: 6853.715819594109,
+  3: 5113.209767682691,
+  5: 5418.778300690459,
+  7: 5618.149068803402,
+  9: 5641.426309574451},
+ 'normalized-losses': {1: 6998.7424709166335,
+  3: 7038.210876329459,
+  5: 7374.513274367573,
+  7: 7722.670399388631,
+  9: 7507.512182575815},
+ 'peak-rpm': {1: 9386.46161279999,
+  3: 8096.1146568480835,
+  5: 7965.54170513815,
+  7: 8256.807774278761,
+  9: 8101.58286959599},
+ 'stroke': {1: 7345.451363903154,
+  3: 7455.212313651712,
+  5: 8096.65389823726,
+  7: 7935.188913776914,
+  9: 8066.594604492951},
+ 'wheel-base': {1: 5400.51418967299,
+  3: 5629.538534558065,
+  5: 5743.8770860517825,
+  7: 6048.744597831812,
+  9: 6360.529322830884},
+ 'width': {1: 5739.245757378005,
+  3: 5291.949721784998,
+  5: 5030.139338284197,
+  7: 4933.6396353832,
+  9: 4951.829909070571}}
+In [18]:
+
+import matplotlib.pyplot as plt
+%matplotlib inline
+​
+for k,v in k_rmse_results.items():
+    x = list(v.keys())
+    y = list(v.values())
+    
+    plt.plot(x,y)
+    plt.xlabel('k value')
+    plt.ylabel('RMSE')
+
+In [19]:
+
+# Compute average RMSE across different `k` values for each feature.
+feature_avg_rmse = {}
+for k,v in k_rmse_results.items():
+    avg_rmse = np.mean(list(v.values()))
+    feature_avg_rmse[k] = avg_rmse
+series_avg_rmse = pd.Series(feature_avg_rmse)
+series_avg_rmse.sort_values()
+Out[19]:
+highway-mpg          4384.386989
+curb-weight          4661.537320
+horsepower           5072.792482
+width                5189.360872
+city-mpg             5264.737474
+length               5729.055853
+wheel-base           5836.640746
+bore                 7092.318813
+normalized-losses    7328.329841
+compression-rate     7335.788011
+stroke               7779.820219
+peak-rpm             8361.301724
+height               8407.734879
+dtype: float64
+In [20]:
+
+def knn_train_test(train_cols, target_col, df):
+    np.random.seed(1)
+    
+    # Randomize order of rows in data frame.
+    shuffled_index = np.random.permutation(df.index)
+    rand_df = df.reindex(shuffled_index)
+​
+    # Divide number of rows in half and round.
+    last_train_row = int(len(rand_df) / 2)
+    
+    # Select the first half and set as training set.
+    # Select the second half and set as test set.
+    train_df = rand_df.iloc[0:last_train_row]
+    test_df = rand_df.iloc[last_train_row:]
+    
+    k_values = [5]
+    k_rmses = {}
+    
+    for k in k_values:
+        # Fit model using k nearest neighbors.
+        knn = KNeighborsRegressor(n_neighbors=k)
+        knn.fit(train_df[train_cols], train_df[target_col])
+​
+        # Make predictions using model.
+        predicted_labels = knn.predict(test_df[train_cols])
+​
+        # Calculate and return RMSE.
+        mse = mean_squared_error(test_df[target_col], predicted_labels)
+        rmse = np.sqrt(mse)
+        
+        k_rmses[k] = rmse
+    return k_rmses
+​
+k_rmse_results = {}
+​
+two_best_features = ['horsepower', 'width']
+rmse_val = knn_train_test(two_best_features, 'price', numeric_cars)
+k_rmse_results["two best features"] = rmse_val
+​
+three_best_features = ['horsepower', 'width', 'curb-weight']
+rmse_val = knn_train_test(three_best_features, 'price', numeric_cars)
+k_rmse_results["three best features"] = rmse_val
+​
+four_best_features = ['horsepower', 'width', 'curb-weight', 'city-mpg']
+rmse_val = knn_train_test(four_best_features, 'price', numeric_cars)
+k_rmse_results["four best features"] = rmse_val
+​
+five_best_features = ['horsepower', 'width', 'curb-weight' , 'city-mpg' , 'highway-mpg']
+rmse_val = knn_train_test(five_best_features, 'price', numeric_cars)
+k_rmse_results["five best features"] = rmse_val
+​
+six_best_features = ['horsepower', 'width', 'curb-weight' , 'city-mpg' , 'highway-mpg', 'length']
+rmse_val = knn_train_test(six_best_features, 'price', numeric_cars)
+k_rmse_results["six best features"] = rmse_val
+​
+k_rmse_results
+Out[20]:
+{'five best features': {5: 4053.975733555753},
+ 'four best features': {5: 4018.743476516703},
+ 'six best features': {5: 3796.654352070254},
+ 'three best features': {5: 4045.999689583284},
+ 'two best features': {5: 4124.554367394593}}
+In [21]:
+
+def knn_train_test(train_cols, target_col, df):
+    np.random.seed(1)
+    
+    # Randomize order of rows in data frame.
+    shuffled_index = np.random.permutation(df.index)
+    rand_df = df.reindex(shuffled_index)
+​
+    # Divide number of rows in half and round.
+    last_train_row = int(len(rand_df) / 2)
+    
+    # Select the first half and set as training set.
+    # Select the second half and set as test set.
+    train_df = rand_df.iloc[0:last_train_row]
+    test_df = rand_df.iloc[last_train_row:]
+    
+    k_values = [i for i in range(1, 25)]
+    k_rmses = {}
+    
+    for k in k_values:
+        # Fit model using k nearest neighbors.
+        knn = KNeighborsRegressor(n_neighbors=k)
+        knn.fit(train_df[train_cols], train_df[target_col])
+​
+        # Make predictions using model.
+        predicted_labels = knn.predict(test_df[train_cols])
+​
+        # Calculate and return RMSE.
+        mse = mean_squared_error(test_df[target_col], predicted_labels)
+        rmse = np.sqrt(mse)
+        
+        k_rmses[k] = rmse
+    return k_rmses
+​
+k_rmse_results = {}
+​
+three_best_features = ['horsepower', 'width', 'curb-weight']
+rmse_val = knn_train_test(three_best_features, 'price', numeric_cars)
+k_rmse_results["three best features"] = rmse_val
+​
+four_best_features = ['horsepower', 'width', 'curb-weight', 'city-mpg']
+rmse_val = knn_train_test(four_best_features, 'price', numeric_cars)
+k_rmse_results["four best features"] = rmse_val
+​
+five_best_features = ['horsepower', 'width', 'curb-weight' , 'city-mpg' , 'highway-mpg']
+rmse_val = knn_train_test(five_best_features, 'price', numeric_cars)
+k_rmse_results["five best features"] = rmse_val
+​
+k_rmse_results
+Out[21]:
+{'five best features': {1: 4346.152585734348,
+  2: 3486.2636393520265,
+  3: 3885.345711929113,
+  4: 4136.824408669041,
+  5: 4053.975733555753,
+  6: 4189.847981765659,
+  7: 4184.740987347481,
+  8: 4186.559861226532,
+  9: 4217.101053421083,
+  10: 4216.509970992141,
+  11: 4311.3449717646,
+  12: 4416.428340275943,
+  13: 4521.681080106428,
+  14: 4540.35909903292,
+  15: 4462.4301120155915,
+  16: 4492.614568578083,
+  17: 4539.551357729757,
+  18: 4590.139844824038,
+  19: 4600.6447193017675,
+  20: 4587.513142253315,
+  21: 4661.90065203651,
+  22: 4726.911998444741,
+  23: 4786.203221312018,
+  24: 4847.361634802069},
+ 'four best features': {1: 4129.498766857262,
+  2: 3864.484226025134,
+  3: 3808.6988280002215,
+  4: 3918.944428127189,
+  5: 4018.743476516703,
+  6: 4099.041584129415,
+  7: 4069.436236259487,
+  8: 4071.6008383928793,
+  9: 4092.1089023710633,
+  10: 4146.415156559509,
+  11: 4300.563855124523,
+  12: 4400.293183120398,
+  13: 4500.1922318554,
+  14: 4538.499618924789,
+  15: 4458.82976046856,
+  16: 4457.6619860232295,
+  17: 4511.597278155634,
+  18: 4565.67157096191,
+  19: 4583.234142065555,
+  20: 4577.233129160919,
+  21: 4635.296098526746,
+  22: 4709.147719748657,
+  23: 4762.085147845404,
+  24: 4819.10324789714},
+ 'three best features': {1: 3763.8630142622565,
+  2: 3708.2847588875547,
+  3: 3530.6875425562375,
+  4: 3884.9112986844007,
+  5: 4045.999689583284,
+  6: 4094.551395669943,
+  7: 4039.7576905889678,
+  8: 4082.0299449215127,
+  9: 4103.695433188134,
+  10: 4188.96610881395,
+  11: 4295.553009268363,
+  12: 4410.948190802413,
+  13: 4514.849847261656,
+  14: 4552.286180368806,
+  15: 4450.618521432591,
+  16: 4449.6666533607295,
+  17: 4474.059422237802,
+  18: 4579.636852404672,
+  19: 4677.135946342344,
+  20: 4737.594820812575,
+  21: 4809.722109104879,
+  22: 4826.037842070856,
+  23: 4815.053321219911,
+  24: 4842.687964264934}}
+In [ ]:
+
+for k,v in k_rmse_results.items():
+    x = list(v.keys())
+    y = list(v.values())
+    
+    plt.plot(x,y)
+    plt.xlabel('k value')
+    plt.ylabel('RMSE')
