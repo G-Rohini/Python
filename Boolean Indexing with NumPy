@@ -1,3 +1,0 @@
-taxi_copy = taxi.copy()
-total_amount = taxi_copy[:,13]
-total_amount[total_amount < 0] = 0
