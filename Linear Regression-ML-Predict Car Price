@@ -1,0 +1,422 @@
+
+import pandas as pd
+pd.options.display.max_columns = 999
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import KFold
+​
+from sklearn.metrics import mean_squared_error
+from sklearn import linear_model
+from sklearn.model_selection import KFold
+In [11]:
+
+df = pd.read_csv("AmesHousing.tsv", delimiter="\t")
+In [12]:
+
+def transform_features(df):
+    return df
+​
+def select_features(df):
+    return df[["Gr Liv Area", "SalePrice"]]
+​
+def train_and_test(df):  
+    train = df[:1460]
+    test = df[1460:]
+    
+    ## columns select 
+    ## return only those
+    numeric_train = train.select_dtypes(include=['integer', 'float'])
+    numeric_test = test.select_dtypes(include=['integer', 'float'])
+    
+    ## drop a feature
+    features = numeric_train.columns.drop("SalePrice")
+    lr = linear_model.LinearRegression()
+    lr.fit(train[features], train["SalePrice"])
+    predictions = lr.predict(test[features])
+    mse = mean_squared_error(test["SalePrice"], predictions)
+    rmse = np.sqrt(mse)
+    
+    return rmse
+​
+transform_df = transform_features(df)
+filtered_df = select_features(transform_df)
+rmse = train_and_test(filtered_df)
+​
+rmse
+Out[12]:
+57088.25161263909
+In [54]:
+
+## number of missing values
+num_missing = df.isnull().sum()
+In [55]:
+
+# columns containing >5% missing values
+drop_missing_cols = num_missing[(num_missing > len(df)/20)].sort_values()
+​
+# Drop those columns 
+df = df.drop(drop_missing_cols.index, axis=1)
+In [35]:
+
+## number of missing values
+text_mv_counts = df.select_dtypes(include=['object']).isnull().sum().sort_values(ascending=False)
+​
+## columns with missing values
+drop_missing_cols_2 = text_mv_counts[text_mv_counts > 0]
+​
+df = df.drop(drop_missing_cols_2.index, axis=1)
+In [36]:
+
+## Compute column-wise missing value counts
+num_missing = df.select_dtypes(include=['int', 'float']).isnull().sum()
+fixable_numeric_cols = num_missing[(num_missing < len(df)/20) & (num_missing > 0)].sort_values()
+fixable_numeric_cols
+Out[36]:
+BsmtFin SF 1       1
+BsmtFin SF 2       1
+Bsmt Unf SF        1
+Total Bsmt SF      1
+Garage Cars        1
+Garage Area        1
+Bsmt Full Bath     2
+Bsmt Half Bath     2
+Mas Vnr Area      23
+dtype: int64
+In [37]:
+
+## Compute the most common value for each column 
+replacement_values_dict = df[fixable_numeric_cols.index].mode().to_dict(orient='records')[0]
+replacement_values_dict
+Out[37]:
+{'Bsmt Full Bath': 0.0,
+ 'Bsmt Half Bath': 0.0,
+ 'Bsmt Unf SF': 0.0,
+ 'BsmtFin SF 1': 0.0,
+ 'BsmtFin SF 2': 0.0,
+ 'Garage Area': 0.0,
+ 'Garage Cars': 2.0,
+ 'Mas Vnr Area': 0.0,
+ 'Total Bsmt SF': 0.0}
+In [38]:
+
+## replace missing values.
+df = df.fillna(replacement_values_dict)
+In [39]:
+
+## Verify that every column has 0 missing values
+df.isnull().sum().value_counts()
+Out[39]:
+0    64
+dtype: int64
+In [40]:
+
+years_sold = df['Yr Sold'] - df['Year Built']
+years_sold[years_sold < 0]
+Out[40]:
+2180   -1
+dtype: int64
+In [41]:
+
+years_since_remod = df['Yr Sold'] - df['Year Remod/Add']
+years_since_remod[years_since_remod < 0]
+Out[41]:
+1702   -1
+2180   -2
+2181   -1
+dtype: int64
+In [42]:
+
+## Create new columns
+df['Years Before Sale'] = years_sold
+df['Years Since Remod'] = years_since_remod
+​
+## Drop rows with negative values
+df = df.drop([1702, 2180, 2181], axis=0)
+​
+## No longer need original year columns
+df = df.drop(["Year Built", "Year Remod/Add"], axis = 1)
+In [43]:
+
+## Drop columns not useful for ML
+df = df.drop(["PID", "Order"], axis=1)
+​
+## Drop columns that show extra information
+df = df.drop(["Mo Sold", "Sale Condition", "Sale Type", "Yr Sold"], axis=1)
+In [44]:
+
+def transform_features(df):
+    num_missing = df.isnull().sum()
+    drop_missing_cols = num_missing[(num_missing > len(df)/20)].sort_values()
+    df = df.drop(drop_missing_cols.index, axis=1)
+    
+    text_mv_counts = df.select_dtypes(include=['object']).isnull().sum().sort_values(ascending=False)
+    drop_missing_cols_2 = text_mv_counts[text_mv_counts > 0]
+    df = df.drop(drop_missing_cols_2.index, axis=1)
+    
+    num_missing = df.select_dtypes(include=['int', 'float']).isnull().sum()
+    fixable_numeric_cols = num_missing[(num_missing < len(df)/20) & (num_missing > 0)].sort_values()
+    replacement_values_dict = df[fixable_numeric_cols.index].mode().to_dict(orient='records')[0]
+    df = df.fillna(replacement_values_dict)
+    
+    years_sold = df['Yr Sold'] - df['Year Built']
+    years_since_remod = df['Yr Sold'] - df['Year Remod/Add']
+    df['Years Before Sale'] = years_sold
+    df['Years Since Remod'] = years_since_remod
+    df = df.drop([1702, 2180, 2181], axis=0)
+​
+    df = df.drop(["PID", "Order", "Mo Sold", "Sale Condition", "Sale Type", "Year Built", "Year Remod/Add"], axis=1)
+    return df
+​
+def select_features(df):
+    return df[["Gr Liv Area", "SalePrice"]]
+​
+def train_and_test(df):  
+    train = df[:1460]
+    test = df[1460:]
+    
+    ## You can use `pd.DataFrame.select_dtypes()` to specify column types
+    ## and return only those columns as a data frame.
+    numeric_train = train.select_dtypes(include=['integer', 'float'])
+    numeric_test = test.select_dtypes(include=['integer', 'float'])
+    
+    ## You can use `pd.Series.drop()` to drop a value.
+    features = numeric_train.columns.drop("SalePrice")
+    lr = linear_model.LinearRegression()
+    lr.fit(train[features], train["SalePrice"])
+    predictions = lr.predict(test[features])
+    mse = mean_squared_error(test["SalePrice"], predictions)
+    rmse = np.sqrt(mse)
+    
+    return rmse
+​
+df = pd.read_csv("AmesHousing.tsv", delimiter="\t")
+transform_df = transform_features(df)
+filtered_df = select_features(transform_df)
+rmse = train_and_test(filtered_df)
+​
+rmse
+Out[44]:
+55275.36731241307
+In [45]:
+
+numerical_df = transform_df.select_dtypes(include=['int', 'float'])
+numerical_df.head(5)
+Out[45]:
+MS SubClass	Lot Area	Overall Qual	Overall Cond	Mas Vnr Area	BsmtFin SF 1	BsmtFin SF 2	Bsmt Unf SF	Total Bsmt SF	1st Flr SF	2nd Flr SF	Low Qual Fin SF	Gr Liv Area	Bsmt Full Bath	Bsmt Half Bath	Full Bath	Half Bath	Bedroom AbvGr	Kitchen AbvGr	TotRms AbvGrd	Fireplaces	Garage Cars	Garage Area	Wood Deck SF	Open Porch SF	Enclosed Porch	3Ssn Porch	Screen Porch	Pool Area	Misc Val	Yr Sold	SalePrice	Years Before Sale	Years Since Remod
+0	20	31770	6	5	112.0	639.0	0.0	441.0	1080.0	1656	0	0	1656	1.0	0.0	1	0	3	1	7	2	2.0	528.0	210	62	0	0	0	0	0	2010	215000	50	50
+1	20	11622	5	6	0.0	468.0	144.0	270.0	882.0	896	0	0	896	0.0	0.0	1	0	2	1	5	0	1.0	730.0	140	0	0	0	120	0	0	2010	105000	49	49
+2	20	14267	6	6	108.0	923.0	0.0	406.0	1329.0	1329	0	0	1329	0.0	0.0	1	1	3	1	6	0	1.0	312.0	393	36	0	0	0	0	12500	2010	172000	52	52
+3	20	11160	7	5	0.0	1065.0	0.0	1045.0	2110.0	2110	0	0	2110	1.0	0.0	2	1	3	1	8	2	2.0	522.0	0	0	0	0	0	0	0	2010	244000	42	42
+4	60	13830	5	5	0.0	791.0	0.0	137.0	928.0	928	701	0	1629	0.0	0.0	2	1	3	1	6	1	2.0	482.0	212	34	0	0	0	0	0	2010	189900	13	12
+In [46]:
+
+abs_corr_coeffs = numerical_df.corr()['SalePrice'].abs().sort_values()
+abs_corr_coeffs
+Out[46]:
+BsmtFin SF 2         0.006127
+Misc Val             0.019273
+Yr Sold              0.030358
+3Ssn Porch           0.032268
+Bsmt Half Bath       0.035875
+Low Qual Fin SF      0.037629
+Pool Area            0.068438
+MS SubClass          0.085128
+Overall Cond         0.101540
+Screen Porch         0.112280
+Kitchen AbvGr        0.119760
+Enclosed Porch       0.128685
+Bedroom AbvGr        0.143916
+Bsmt Unf SF          0.182751
+Lot Area             0.267520
+2nd Flr SF           0.269601
+Bsmt Full Bath       0.276258
+Half Bath            0.284871
+Open Porch SF        0.316262
+Wood Deck SF         0.328183
+BsmtFin SF 1         0.439284
+Fireplaces           0.474831
+TotRms AbvGrd        0.498574
+Mas Vnr Area         0.506983
+Years Since Remod    0.534985
+Full Bath            0.546118
+Years Before Sale    0.558979
+1st Flr SF           0.635185
+Garage Area          0.641425
+Total Bsmt SF        0.644012
+Garage Cars          0.648361
+Gr Liv Area          0.717596
+Overall Qual         0.801206
+SalePrice            1.000000
+Name: SalePrice, dtype: float64
+In [47]:
+
+## only keep columns with a correlation coefficient of larger than 0.4 
+abs_corr_coeffs[abs_corr_coeffs > 0.4]
+Out[47]:
+BsmtFin SF 1         0.439284
+Fireplaces           0.474831
+TotRms AbvGrd        0.498574
+Mas Vnr Area         0.506983
+Years Since Remod    0.534985
+Full Bath            0.546118
+Years Before Sale    0.558979
+1st Flr SF           0.635185
+Garage Area          0.641425
+Total Bsmt SF        0.644012
+Garage Cars          0.648361
+Gr Liv Area          0.717596
+Overall Qual         0.801206
+SalePrice            1.000000
+Name: SalePrice, dtype: float64
+In [48]:
+
+## Drop columns with less than 0.4 correlation 
+transform_df = transform_df.drop(abs_corr_coeffs[abs_corr_coeffs < 0.4].index, axis=1)
+In [49]:
+
+## Create a list of column names from documentation 
+nominal_features = ["PID", "MS SubClass", "MS Zoning", "Street", "Alley", "Land Contour", "Lot Config", "Neighborhood", 
+                    "Condition 1", "Condition 2", "Bldg Type", "House Style", "Roof Style", "Roof Matl", "Exterior 1st", 
+                    "Exterior 2nd", "Mas Vnr Type", "Foundation", "Heating", "Central Air", "Garage Type", 
+                    "Misc Feature", "Sale Type", "Sale Condition"]
+In [50]:
+
+## Which categorical columns have we still carried 
+transform_cat_cols = []
+for col in nominal_features:
+    if col in transform_df.columns:
+        transform_cat_cols.append(col)
+​
+## How many unique values 
+uniqueness_counts = transform_df[transform_cat_cols].apply(lambda col: len(col.value_counts())).sort_values()
+## Aribtrary cutoff of 10 unique values 
+drop_nonuniq_cols = uniqueness_counts[uniqueness_counts > 10].index
+transform_df = transform_df.drop(drop_nonuniq_cols, axis=1)
+In [51]:
+
+## Select just the remaining text columns 
+text_cols = transform_df.select_dtypes(include=['object'])
+for col in text_cols:
+    transform_df[col] = transform_df[col].astype('category')
+    
+## Create dummy columns and add back to the dataframe!
+transform_df = pd.concat([
+    transform_df, 
+    pd.get_dummies(transform_df.select_dtypes(include=['category']))
+], axis=1).drop(text_cols,axis=1)
+In [53]:
+
+def transform_features(df):
+    num_missing = df.isnull().sum()
+    drop_missing_cols = num_missing[(num_missing > len(df)/20)].sort_values()
+    df = df.drop(drop_missing_cols.index, axis=1)
+    
+    text_mv_counts = df.select_dtypes(include=['object']).isnull().sum().sort_values(ascending=False)
+    drop_missing_cols_2 = text_mv_counts[text_mv_counts > 0]
+    df = df.drop(drop_missing_cols_2.index, axis=1)
+    
+    num_missing = df.select_dtypes(include=['int', 'float']).isnull().sum()
+    fixable_numeric_cols = num_missing[(num_missing < len(df)/20) & (num_missing > 0)].sort_values()
+    replacement_values_dict = df[fixable_numeric_cols.index].mode().to_dict(orient='records')[0]
+    df = df.fillna(replacement_values_dict)
+    
+    years_sold = df['Yr Sold'] - df['Year Built']
+    years_since_remod = df['Yr Sold'] - df['Year Remod/Add']
+    df['Years Before Sale'] = years_sold
+    df['Years Since Remod'] = years_since_remod
+    df = df.drop([1702, 2180, 2181], axis=0)
+​
+    df = df.drop(["PID", "Order", "Mo Sold", "Sale Condition", "Sale Type", "Year Built", "Year Remod/Add"], axis=1)
+    return df
+​
+def select_features(df, coeff_threshold=0.4, uniq_threshold=10):
+    numerical_df = df.select_dtypes(include=['int', 'float'])
+    abs_corr_coeffs = numerical_df.corr()['SalePrice'].abs().sort_values()
+    df = df.drop(abs_corr_coeffs[abs_corr_coeffs < coeff_threshold].index, axis=1)
+    
+    nominal_features = ["PID", "MS SubClass", "MS Zoning", "Street", "Alley", "Land Contour", "Lot Config", "Neighborhood", 
+                    "Condition 1", "Condition 2", "Bldg Type", "House Style", "Roof Style", "Roof Matl", "Exterior 1st", 
+                    "Exterior 2nd", "Mas Vnr Type", "Foundation", "Heating", "Central Air", "Garage Type", 
+                    "Misc Feature", "Sale Type", "Sale Condition"]
+    
+    transform_cat_cols = []
+    for col in nominal_features:
+        if col in df.columns:
+            transform_cat_cols.append(col)
+​
+    uniqueness_counts = df[transform_cat_cols].apply(lambda col: len(col.value_counts())).sort_values()
+    drop_nonuniq_cols = uniqueness_counts[uniqueness_counts > 10].index
+    df = df.drop(drop_nonuniq_cols, axis=1)
+    
+    text_cols = df.select_dtypes(include=['object'])
+    for col in text_cols:
+        df[col] = df[col].astype('category')
+    df = pd.concat([df, pd.get_dummies(df.select_dtypes(include=['category']))], axis=1).drop(text_cols,axis=1)
+    
+    return df
+​
+def train_and_test(df, k=0):
+    numeric_df = df.select_dtypes(include=['integer', 'float'])
+    features = numeric_df.columns.drop("SalePrice")
+    lr = linear_model.LinearRegression()
+    
+    if k == 0:
+        train = df[:1460]
+        test = df[1460:]
+​
+        lr.fit(train[features], train["SalePrice"])
+        predictions = lr.predict(test[features])
+        mse = mean_squared_error(test["SalePrice"], predictions)
+        rmse = np.sqrt(mse)
+​
+        return rmse
+    
+    if k == 1:
+        # Randomize *all* rows (frac=1) from `df` and return
+        shuffled_df = df.sample(frac=1, )
+        train = df[:1460]
+        test = df[1460:]
+        
+        lr.fit(train[features], train["SalePrice"])
+        predictions_one = lr.predict(test[features])        
+        
+        mse_one = mean_squared_error(test["SalePrice"], predictions_one)
+        rmse_one = np.sqrt(mse_one)
+        
+        lr.fit(test[features], test["SalePrice"])
+        predictions_two = lr.predict(train[features])        
+       
+        mse_two = mean_squared_error(train["SalePrice"], predictions_two)
+        rmse_two = np.sqrt(mse_two)
+        
+        avg_rmse = np.mean([rmse_one, rmse_two])
+        print(rmse_one)
+        print(rmse_two)
+        return avg_rmse
+    else:
+        kf = KFold(n_splits=k, shuffle=True)
+        rmse_values = []
+        for train_index, test_index, in kf.split(df):
+            train = df.iloc[train_index]
+            test = df.iloc[test_index]
+            lr.fit(train[features], train["SalePrice"])
+            predictions = lr.predict(test[features])
+            mse = mean_squared_error(test["SalePrice"], predictions)
+            rmse = np.sqrt(mse)
+            rmse_values.append(rmse)
+        print(rmse_values)
+        avg_rmse = np.mean(rmse_values)
+        return avg_rmse
+​
+df = pd.read_csv("AmesHousing.tsv", delimiter="\t")
+transform_df = transform_features(df)
+filtered_df = select_features(transform_df)
+rmse = train_and_test(filtered_df, k=4)
+​
+rmse
+[27329.519945734322, 36593.31554926048, 26278.771829058554, 25837.529716852274]
+Out[53]:
+29009.784260226406
+In [ ]:
+
+​
